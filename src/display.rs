@@ -94,27 +94,61 @@ pub fn display_projects(projects: Vec<Project>) {
     println!("");
 
     if projects.is_empty() {
-        println!("  No projects found!\n");
+        println!("  No projects found!");
+        println!("");
         return;
     }
 
-    for project in projects.iter() {
-        println!(
-            "  {} {}",
-            project.name.underline(),
-            format!("[{} tasks]", project.task_count).dimmed()
-        );
+    let mut area_projects: HashMap<Option<String>, Vec<&Project>> = HashMap::new();
 
-        if let Some(area) = &project.area_name {
-            println!("    Area: {}", area);
-        }
+    for project in &projects {
+        area_projects
+            .entry(project.area_name.clone())
+            .or_insert_with(Vec::new)
+            .push(project);
+    }
 
-        if let Some(due) = &project.due_date {
-            println!("    Due: {}", due.dimmed());
+    if let Some(errands_projects) = area_projects.get(&None) {
+        println!("  {}", "Errands".underline());
+        for project in errands_projects {
+            print!("    ⚪︎ {}", project.name.blue());
+
+            if let Some(due) = &project.due_date {
+                print!(" {}", due.dimmed());
+            }
+            println!();
         }
 
         println!("");
     }
+
+    for (area_name, area_projects) in area_projects {
+        if area_name.is_none() {
+            continue;
+        }
+
+        let area = area_name.unwrap();
+        let total = area_projects.len();
+
+        println!(
+            "  {} {}",
+            area.underline(),
+            format!("[0/{}]", total).dimmed()
+        );
+
+        for project in area_projects {
+            print!("    ⚪︎ {}", project.name.blue());
+
+            if let Some(due) = &project.due_date {
+                print!(" {}", due.dimmed());
+            }
+            println!();
+        }
+
+        println!("");
+    }
+
+    println!("");
 }
 
 pub fn display_task_created(task_name: &str) {
