@@ -229,7 +229,7 @@ pub fn add_todo(title: &str) {
         .expect("Failed to execute osascript");
 
     if output.status.success() {
-        println!("{}", String::from_utf8_lossy(&output.stdout));
+        crate::display::display_task_created(title);
     } else {
         eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
     }
@@ -259,8 +259,64 @@ pub fn add_todo_to_project(title: &str, project_name: &str) {
         .expect("Failed to execute osascript");
 
     if output.status.success() {
-        println!("{}", String::from_utf8_lossy(&output.stdout));
+        crate::display::display_task_created(title);
     } else {
         eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+    }
+}
+
+pub fn complete_todo(todo_id: &str) -> Result<String, String> {
+    let todos = fetch_today_todos();
+
+    let index = match todo_id.parse::<usize>() {
+        Ok(num) => {
+            if num == 0 || num > todos.len() {
+                return Err(format!(
+                    "Invalid todo ID: {}. Valid range is 1-{}",
+                    todo_id,
+                    todos.len()
+                ));
+            }
+            num - 1
+        }
+        Err(_) => return Err(format!("Invalid todo ID: {}. Must be a number.", todo_id)),
+    };
+
+    let todo = match todos.get(index) {
+        Some(todo) => todo,
+        None => return Err(format!("Todo with ID {} not found", todo_id)),
+    };
+
+    let script = format!(
+        r#"
+        tell application "Things3"
+            set todayToDos to to dos of list "Today"
+            repeat with i from 1 to count of todayToDos
+                set toDo to item i of todayToDos
+                if name of toDo is "{}" then
+                    set status of toDo to completed
+                    return "Completed: " & name of toDo
+                end if
+            end repeat
+            return "Todo not found"
+        end tell
+        "#,
+        todo.name
+    );
+
+    let output = Command::new("osascript")
+        .arg("-e")
+        .arg(script)
+        .output()
+        .expect("Failed to execute osascript");
+
+    if output.status.success() {
+        let result = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if result == "Todo not found" {
+            return Err("Todo not found in Things 3".to_string());
+        }
+        Ok(result)
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
     }
 }

@@ -1,60 +1,134 @@
 use crate::models::{Project, Todo};
+use colored::*;
+use std::collections::{HashMap, HashSet};
 
 pub fn display_todos(todos: Vec<Todo>) {
-    println!("Today's Todos:");
-
     if todos.is_empty() {
-        println!("  No todos for today!");
+        println!("\n  No todos for today!\n");
         return;
     }
 
-    for todo in todos {
-        println!("• {}", todo.name);
+    let mut id_counter = 1;
+    let mut todo_ids: HashMap<String, usize> = HashMap::new();
 
-        if let Some(project) = &todo.project_name {
-            println!("  Project: {}", project);
+    for todo in &todos {
+        todo_ids.insert(todo.name.clone(), id_counter);
+        id_counter += 1;
+    }
+
+    let mut standalone_todos = Vec::new();
+    let mut area_todos: HashMap<String, Vec<&Todo>> = HashMap::new();
+    let mut project_todos: HashMap<String, Vec<&Todo>> = HashMap::new();
+    let mut covered_todos = HashSet::new();
+
+    for todo in &todos {
+        match (&todo.area_name, &todo.project_name) {
+            (Some(area), None) => {
+                area_todos
+                    .entry(area.clone())
+                    .or_insert_with(Vec::new)
+                    .push(todo);
+                covered_todos.insert(todo.name.clone());
+            }
+            (_, Some(project)) => {
+                project_todos
+                    .entry(project.clone())
+                    .or_insert_with(Vec::new)
+                    .push(todo);
+                covered_todos.insert(todo.name.clone());
+            }
+            _ => {}
         }
+    }
 
-        if let Some(area) = &todo.area_name {
-            println!("  Area: {}", area);
+    for todo in &todos {
+        if !covered_todos.contains(&todo.name) {
+            standalone_todos.push(todo);
         }
+    }
 
-        if !todo.notes.is_empty() {
-            println!("  Notes: {}", todo.notes);
+    println!("");
+
+    if !standalone_todos.is_empty() {
+        println!("  {}", "Errands".underline());
+
+        for todo in standalone_todos.iter() {
+            let id = todo_ids.get(&todo.name).unwrap_or(&0);
+            println!("    ☐  {} {}", todo.name, format!("({})", id).dimmed());
         }
+        println!("");
+    }
 
-        if let Some(due) = &todo.due_date {
-            println!("  Due: {}", due);
+    for (area, area_todos) in area_todos {
+        let total = area_todos.len();
+        println!(
+            "  {} {}",
+            area.underline(),
+            format!("[0/{}]", total).dimmed()
+        );
+
+        for todo in area_todos.iter() {
+            let id = todo_ids.get(&todo.name).unwrap_or(&0);
+            println!("    ☐  {} {}", todo.name, format!("({})", id).dimmed());
         }
+        println!("");
+    }
 
-        if !todo.tags.is_empty() {
-            println!("  Tags: {}", todo.tags.join(", "));
+    for (project, project_todos) in project_todos {
+        let total = project_todos.len();
+        println!(
+            "  {} {}",
+            project.underline(),
+            format!("[0/{}]", total).dimmed()
+        );
+
+        for todo in project_todos.iter() {
+            let id = todo_ids.get(&todo.name).unwrap_or(&0);
+            println!("    ☐  {} {}", todo.name, format!("({})", id).dimmed());
         }
-
-        println!(); // Empty line between todos
+        println!("");
     }
 }
 
 pub fn display_projects(projects: Vec<Project>) {
-    println!("Projects:");
+    println!("");
 
     if projects.is_empty() {
-        println!("  No projects found!");
+        println!("  No projects found!\n");
         return;
     }
 
-    for project in projects {
-        println!("• {}", project.name);
+    for project in projects.iter() {
+        println!(
+            "  {} {}",
+            project.name.underline(),
+            format!("[{} tasks]", project.task_count).dimmed()
+        );
 
         if let Some(area) = &project.area_name {
-            println!("  Area: {}", area);
+            println!("    Area: {}", area);
         }
 
         if let Some(due) = &project.due_date {
-            println!("  Due: {}", due);
+            println!("    Due: {}", due.dimmed());
         }
 
-        println!("  Tasks: {}", project.task_count);
-        println!(); // Empty line between projects
+        println!("");
     }
+}
+
+pub fn display_task_created(task_name: &str) {
+    println!(
+        "\n ✔  {}: {}\n",
+        "Created task".green().bold(),
+        task_name.bold()
+    );
+}
+
+pub fn display_task_completed(task_name: &str) {
+    println!(
+        "\n ✓  {}: {}\n",
+        "Completed task".green().bold(),
+        task_name.bold()
+    );
 }

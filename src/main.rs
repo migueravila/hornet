@@ -16,6 +16,15 @@ fn main() {
     } else if matches.subcommand_matches("projects").is_some() {
         let projects = api::fetch_projects();
         display::display_projects(projects);
+    } else if let Some(matches) = matches.subcommand_matches("done") {
+        let id = matches.value_of("id").unwrap();
+        match api::complete_todo(id) {
+            Ok(message) => {
+                let task_name = message.strip_prefix("Completed: ").unwrap_or(&message);
+                display::display_task_completed(task_name);
+            }
+            Err(err) => eprintln!("Error: {}", err),
+        }
     } else {
         let todos = api::fetch_today_todos();
         display::display_todos(todos);

@@ -18,4 +18,11 @@ pub fn build_cli() -> Command<'static> {
                 ),
         )
         .subcommand(Command::new("projects").about("List all projects"))
+        .subcommand(
+            Command::new("done").about("Mark a todo as complete").arg(
+                Arg::new("id")
+                    .help("ID of the todo to complete")
+                    .required(true),
+            ),
+        )
 }
