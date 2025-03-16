@@ -97,67 +97,6 @@ pub fn display_todos(todos: Vec<Todo>) {
     print_border_line();
 }
 
-pub fn display_projects(projects: Vec<Project>) {
-    print_border_line();
-
-    if projects.is_empty() {
-        println!("  No projects found!");
-        print_border_line();
-        return;
-    }
-
-    let mut area_projects: HashMap<Option<String>, Vec<&Project>> = HashMap::new();
-
-    for project in &projects {
-        area_projects
-            .entry(project.area_name.clone())
-            .or_insert_with(Vec::new)
-            .push(project);
-    }
-
-    if let Some(errands_projects) = area_projects.get(&None) {
-        println!("  {}", "Errands".underline());
-        for project in errands_projects {
-            print!("    ⚪︎ / {}", project.name.blue().bold());
-
-            if let Some(due) = &project.due_date {
-                print!(" {}", due.dimmed());
-            }
-            println!();
-        }
-
-        println!("");
-    }
-
-    for (area_name, area_projects) in area_projects {
-        if area_name.is_none() {
-            continue;
-        }
-
-        let area = area_name.unwrap();
-        let total = area_projects.len();
-
-        println!(
-            "  @ {} {}",
-            area.cyan().bold(),
-            format!("[0/{}]", total).dimmed()
-        );
-
-        for project in area_projects {
-            print!("    ⚪︎ / {}", project.name.blue().bold());
-
-            if let Some(due) = &project.due_date {
-                print!(" {}", due.dimmed());
-            }
-            println!();
-        }
-
-        println!("");
-    }
-
-    print_border_line();
-}
-
 pub fn display_task_created(task_name: &str) {
     print_border_line();
     println!(
@@ -211,7 +150,7 @@ pub fn display_areas(areas: Vec<Area>) {
 
     for area in areas {
         println!(
-            "  @ {} {} {}",
+            "  @{} {} {}",
             area.name.cyan().bold(),
             format!("Projects: {}", area.project_count).dimmed(),
             format!("Todos: {}", area.todo_count).dimmed()
@@ -235,10 +174,40 @@ pub fn display_tags(tags: Vec<Tag>) {
 
     for tag in tags {
         println!(
-            "  # {} {}",
+            "  #{} {}",
             tag.name.yellow().bold(),
             format!("({})", tag.todo_count).dimmed()
         );
+    }
+
+    print_border_line();
+}
+
+pub fn display_projects(projects: Vec<Project>) {
+    print_border_line();
+
+    if projects.is_empty() {
+        println!("  No projects found!");
+        print_border_line();
+        return;
+    }
+
+    println!("  {}", "Projects".bold().underline());
+    println!("");
+
+    for project in &projects {
+        print!("  /{}", project.name.blue().bold());
+        print!(" {}", format!("Todo: {}", project.task_count).dimmed());
+
+        if let Some(area_name) = &project.area_name {
+            print!(" {} {}", "Area:".dimmed(), area_name.cyan());
+        }
+
+        if let Some(due) = &project.due_date {
+            print!(" {} {}", "Due:".dimmed(), due.dimmed());
+        }
+
+        println!();
     }
 
     print_border_line();
