@@ -15,3 +15,16 @@ pub struct Project {
     pub due_date: Option<String>,
     pub task_count: usize,
 }
+
+#[derive(Debug)]
+pub struct Area {
+    pub name: String,
+    pub project_count: usize,
+    pub todo_count: usize,
+}
+
+#[derive(Debug)]
+pub struct Tag {
+    pub name: String,
+    pub todo_count: usize,
+}

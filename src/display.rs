@@ -1,10 +1,17 @@
-use crate::models::{Project, Todo};
+use crate::models::{Area, Project, Tag, Todo};
 use colored::*;
 use std::collections::{HashMap, HashSet};
 
+fn print_border_line() {
+    println!("{}", "─".repeat(60).bright_black());
+}
+
 pub fn display_todos(todos: Vec<Todo>) {
+    print_border_line();
+
     if todos.is_empty() {
-        println!("\n  No todos for today!\n");
+        println!("  No todos for today!");
+        print_border_line();
         return;
     }
 
@@ -47,8 +54,6 @@ pub fn display_todos(todos: Vec<Todo>) {
         }
     }
 
-    println!("");
-
     if !standalone_todos.is_empty() {
         println!("  {}", "Errands".underline());
 
@@ -62,8 +67,8 @@ pub fn display_todos(todos: Vec<Todo>) {
     for (area, area_todos) in area_todos {
         let total = area_todos.len();
         println!(
-            "  {} {}",
-            area.underline(),
+            "  @ {} {}",
+            area.cyan().bold(),
             format!("[0/{}]", total).dimmed()
         );
 
@@ -77,8 +82,8 @@ pub fn display_todos(todos: Vec<Todo>) {
     for (project, project_todos) in project_todos {
         let total = project_todos.len();
         println!(
-            "  {} {}",
-            project.underline(),
+            "  / {} {}",
+            project.blue().bold(),
             format!("[0/{}]", total).dimmed()
         );
 
@@ -88,14 +93,16 @@ pub fn display_todos(todos: Vec<Todo>) {
         }
         println!("");
     }
+
+    print_border_line();
 }
 
 pub fn display_projects(projects: Vec<Project>) {
-    println!("");
+    print_border_line();
 
     if projects.is_empty() {
         println!("  No projects found!");
-        println!("");
+        print_border_line();
         return;
     }
 
@@ -111,7 +118,7 @@ pub fn display_projects(projects: Vec<Project>) {
     if let Some(errands_projects) = area_projects.get(&None) {
         println!("  {}", "Errands".underline());
         for project in errands_projects {
-            print!("    ⚪︎ {}", project.name.blue());
+            print!("    ⚪︎ / {}", project.name.blue().bold());
 
             if let Some(due) = &project.due_date {
                 print!(" {}", due.dimmed());
@@ -131,13 +138,13 @@ pub fn display_projects(projects: Vec<Project>) {
         let total = area_projects.len();
 
         println!(
-            "  {} {}",
-            area.underline(),
+            "  @ {} {}",
+            area.cyan().bold(),
             format!("[0/{}]", total).dimmed()
         );
 
         for project in area_projects {
-            print!("    ⚪︎ {}", project.name.blue());
+            print!("    ⚪︎ / {}", project.name.blue().bold());
 
             if let Some(due) = &project.due_date {
                 print!(" {}", due.dimmed());
@@ -148,21 +155,91 @@ pub fn display_projects(projects: Vec<Project>) {
         println!("");
     }
 
-    println!("");
+    print_border_line();
 }
 
 pub fn display_task_created(task_name: &str) {
+    print_border_line();
     println!(
-        "\n ✔  {}: {}\n",
+        " ✔  {}: {}",
         "Created task".green().bold(),
         task_name.bold()
     );
+    print_border_line();
 }
 
 pub fn display_task_completed(task_name: &str) {
+    print_border_line();
     println!(
-        "\n ✓  {}: {}\n",
+        " ✓  {}: {}",
         "Completed task".green().bold(),
         task_name.bold()
     );
+    print_border_line();
+}
+
+pub fn display_error(message: &str) {
+    print_border_line();
+    println!(" ✗  {}: {}", "Error".red().bold(), message);
+    print_border_line();
+}
+
+pub fn display_todos_with_header(todos: Vec<Todo>, header: &str) {
+    print_border_line();
+
+    if todos.is_empty() {
+        println!("  No todos in {}!", header);
+        print_border_line();
+        return;
+    }
+
+    println!("  {}", header.bold().underline());
+    display_todos(todos);
+}
+
+pub fn display_areas(areas: Vec<Area>) {
+    print_border_line();
+
+    if areas.is_empty() {
+        println!("  No areas found!");
+        print_border_line();
+        return;
+    }
+
+    println!("  {}", "Areas".bold().underline());
+    println!("");
+
+    for area in areas {
+        println!(
+            "  @ {} {} {}",
+            area.name.cyan().bold(),
+            format!("Projects: {}", area.project_count).dimmed(),
+            format!("Todos: {}", area.todo_count).dimmed()
+        );
+    }
+
+    print_border_line();
+}
+
+pub fn display_tags(tags: Vec<Tag>) {
+    print_border_line();
+
+    if tags.is_empty() {
+        println!("  No tags found!");
+        print_border_line();
+        return;
+    }
+
+    println!("  {}", "Tags".bold().underline());
+    println!("");
+
+    for tag in tags {
+        println!(
+            "  # {} {}",
+            tag.name.yellow().bold(),
+            format!("({})", tag.todo_count).dimmed()
+        );
+    }
+
+    print_border_line();
 }
